@@ -7,6 +7,7 @@ import (
 	"GolangBackend/internal/global"
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -18,6 +19,8 @@ type IBaseRepository[T entities.IBaseEntity] interface {
 	FindById(ctx context.Context, options *dto.GetByIdOptions) (T, error)
 
 	Create(ctx context.Context, entity T) (T, error)
+	Update(ctx context.Context, id string, entity T) (T, error)
+	Delete(ctx context.Context, id string) (bool, error)
 }
 
 type BaseRepository[T entities.IBaseEntity] struct {
@@ -53,16 +56,14 @@ func (r *BaseRepository[T]) ScanRow(rows pgx.Rows) (T, error) {
 		return *new(T), err
 	}
 
-
 	result := make(map[string]any, len(fieldDescriptions))
 	for i, field := range fieldDescriptions {
 		result[string(field.Name)] = *(scanArgs[i].(*any))
 	}
 
-  helper.LogInfo("fieldDescriptions %v", result)
-
 	entity := r.entity()
 	entity.FromMap(result)
+
 	return entity, nil
 }
 
@@ -188,5 +189,71 @@ func (r *BaseRepository[T]) FindAll(ctx context.Context, options *dto.ListOption
 	}
 
 	return r.ScanRows(rows)
+}
 
+func (r *BaseRepository[T]) Update(ctx context.Context, id string, entity T) (T, error) {
+	now := time.Now()
+	data := entity.ToMap()
+
+	excludeFields := []string{"id", "created_at", "deleted"}
+	toUpdateData := make(map[string]any)
+
+	for k, v := range data {
+		if slices.Contains(excludeFields, k) {
+			continue
+		}
+
+		if !helper.IsEmptyValue(v) {
+			toUpdateData[k] = v
+		}
+	}
+
+	toUpdateData["modified_at"] = now
+
+	setClauses := make([]string, 0, len(toUpdateData))
+	args := make([]any, 0, len(toUpdateData) + 2)
+	i := 1
+	for k, v := range toUpdateData {
+		setClauses = append(setClauses, fmt.Sprintf("%s = $%d", k, i))
+		args = append(args, v)
+		i++
+	}
+
+	if len(toUpdateData) == 1 {
+		return entity, nil
+	}
+
+	args = append(args, id)
+
+	query := fmt.Sprintf(`
+		UPDATE %s 
+		SET %s
+		WHERE id = $%d
+		RETURNING *`,
+		r.table,
+		strings.Join(setClauses, ", "),
+		i,
+	)
+
+	helper.LogInfo("now %s", now)
+	helper.LogInfo("%s", args)
+	helper.LogInfo("%s", query)
+
+	row, err := global.DB.Query(ctx, query, args...)
+	if err != nil {
+		return *new(T), err
+	}
+
+	return r.ScanRow(row)
+}
+
+func (r *BaseRepository[T]) Delete(ctx context.Context, id string) (bool, error) {
+	// query := fmt.Sprintf(
+	// 	`INSERT INTO %s (%s) VALUES (%s) RETURNING *`,
+	// 	r.table,
+	// 	strings.Join(cols, ", "),
+	// 	strings.Join(placeholders, ", "),
+	// )
+
+	return true, nil
 }

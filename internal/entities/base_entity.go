@@ -1,7 +1,6 @@
 package entities
 
 import (
-	"GolangBackend/helper"
 	"time"
 
 	"github.com/google/uuid"
@@ -20,13 +19,11 @@ type BaseEntity struct {
 }
 
 func (e *BaseEntity) FromMap(data map[string]any) {
-	if v, ok := data["id"].([]uint8); ok {
-		if uid, err := uuid.FromBytes(v); err != nil {
+	if v, ok := data["id"].([16]uint8); ok {
+		if uid, err := uuid.FromBytes(v[:]); err == nil {
 			e.ID = uid.String()
 		}
-	} else{
-    helper.LogInfo("uid %v", ok)
-  }
+	}
 	if v, ok := data["created_at"].(time.Time); ok {
 		e.CreatedAt = v
 	}

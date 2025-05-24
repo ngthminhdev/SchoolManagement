@@ -31,10 +31,13 @@ func (c *BaseController[T, S]) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/"+c.path, c.FindAll).Methods("GET")
 	router.HandleFunc("/"+c.path+"/{id}", c.FindById).Methods("GET")
 	router.HandleFunc("/"+c.path, c.Create).Methods("POST")
+
+	router.HandleFunc("/"+c.path+"/{id}", c.Update).Methods("PUT")
+	router.HandleFunc("/"+c.path+"/{id}", c.Delete).Methods("DELETE")
 }
 
 func (c *BaseController[T, S]) JsonResponse(w http.ResponseWriter, data dto.APIResponse) {
-	response, err := json.Marshal(data)
+	response, err := json.Marshal(data.ToAPIResponse())
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Json encoding to response error"))
@@ -79,8 +82,6 @@ func (c *BaseController[T, S]) FindAll(w http.ResponseWriter, r *http.Request) {
 	if selectFields != "" {
 		fields = append(fields, selectFields)
 	}
-
-	helper.LogInfo("fields %v", fields)
 
 	entities, err := c.service.FindAll(ctx, &dto.ListOptions{
 		Offset: offset,
@@ -129,8 +130,6 @@ func (c *BaseController[T, S]) FindById(w http.ResponseWriter, r *http.Request) 
 		ID:     id,
 	})
 
-  helper.LogInfo("%v", entity)
-
 	if err != nil {
 		helper.LogError(err, "FindById Error")
 		c.ErrorResponse(w, http.StatusBadRequest, nil)
@@ -149,19 +148,87 @@ func (c *BaseController[T, S]) FindById(w http.ResponseWriter, r *http.Request) 
 }
 
 func (c *BaseController[T, S]) Create(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	var entity T
-	decoder := json.NewDecoder(r.Body)
 
+	fail := func(status int, message string) {
+		c.ErrorResponse(w, status, &message)
+	}
+
+	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&entity)
 	if err != nil {
-		msg := "Create entity error"
+		fail(http.StatusBadRequest, "Create entity error: invalid JSON")
+		return
+	}
+
+	newEnity, err := c.service.Create(ctx, entity)
+
+	if err != nil {
+		fail(http.StatusBadRequest, "Create entity error: service falure")
+		return
+	}
+
+	data := dto.APIResponse{
+		Status:  http.StatusOK,
+		Data:    newEnity.ToMap(),
+		Message: "OK",
+	}
+
+	c.JsonResponse(w, data)
+}
+
+func (c *BaseController[T, S]) Update(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	vars := mux.Vars(r)
+	id := vars["id"]
+	var entity T
+
+	fail := func(status int, message string) {
+		c.ErrorResponse(w, status, &message)
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&entity)
+	if err != nil {
+		fail(http.StatusBadRequest, "Update entity error: invalid JSON")
+		return
+	}
+
+	newEnitty, err := c.service.Update(ctx, id, entity)
+
+	if err != nil {
+		fail(http.StatusBadRequest, "Update entity error: service falure")
+		return
+	}
+
+	data := dto.APIResponse{
+		Status:  http.StatusOK,
+		Data:    newEnitty.ToMap(),
+		Message: "OK",
+	}
+
+
+	c.JsonResponse(w, data)
+}
+
+
+func (c *BaseController[T, S]) Delete(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	isDeleted, err := c.service.Delete(ctx, id)
+	if err != nil {
+		msg := "Update entity error"
 		c.ErrorResponse(w, http.StatusBadRequest, &msg)
 		return
 	}
 
 	data := dto.APIResponse{
 		Status:  http.StatusOK,
-		Data:    entity,
+		Data:    isDeleted,
 		Message: "OK",
 	}
 

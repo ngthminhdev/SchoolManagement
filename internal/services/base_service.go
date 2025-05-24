@@ -12,6 +12,8 @@ type IBaseService[T entities.IBaseEntity] interface {
 	FindAll(ctx context.Context, options *dto.ListOptions) ([]T, error)
 
 	Create(ctx context.Context, entity T) (T, error)
+	Update(ctx context.Context, id string, entity T) (T, error)
+	Delete(ctx context.Context, id string) (bool, error)
 }
 
 type BaseService[T entities.IBaseEntity, R repositories.IBaseRepository[T]] struct {
@@ -25,13 +27,21 @@ func NewBaseService[T entities.IBaseEntity, R repositories.IBaseRepository[T]](r
 }
 
 func (s *BaseService[T, R]) FindAll(ctx context.Context, options *dto.ListOptions) ([]T, error) {
-	return s.FindAll(ctx, options)
+	return s.repository.FindAll(ctx, options)
 }
 
 func (s *BaseService[T, R]) FindById(ctx context.Context, options *dto.GetByIdOptions) (T, error) {
-	return s.FindById(ctx, options)
+	return s.repository.FindById(ctx, options)
 }
 
 func (s *BaseService[T, R]) Create(ctx context.Context, entity T) (T, error) {
-	return s.Create(ctx, entity)
+	return s.repository.Create(ctx, entity)
+}
+
+func (s *BaseService[T, R]) Update(ctx context.Context, id string, entity T) (T, error) {
+	return s.repository.Update(ctx, id, entity)
+}
+
+func (s *BaseService[T, R]) Delete(ctx context.Context, id string) (bool, error) {
+	return s.repository.Delete(ctx, id)
 }

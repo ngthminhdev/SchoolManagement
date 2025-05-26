@@ -128,8 +128,12 @@ func (r *BaseRepository[T]) Create(ctx context.Context, entity T) (T, error) {
 		strings.Join(cols, ", "),
 		strings.Join(placeholders, ", "),
 	)
+	
+	helper.LogInfo("%s", query)
+	helper.LogInfo("args %v", args)
 
 	row, err := global.DB.Query(ctx, query, args...)
+	helper.LogError(err, "err")
 	if err != nil {
 		return *new(T), err
 	}
@@ -211,7 +215,7 @@ func (r *BaseRepository[T]) Update(ctx context.Context, id string, entity T) (T,
 	toUpdateData["modified_at"] = now
 
 	setClauses := make([]string, 0, len(toUpdateData))
-	args := make([]any, 0, len(toUpdateData) + 2)
+	args := make([]any, 0, len(toUpdateData)+2)
 	i := 1
 	for k, v := range toUpdateData {
 		setClauses = append(setClauses, fmt.Sprintf("%s = $%d", k, i))
@@ -235,10 +239,6 @@ func (r *BaseRepository[T]) Update(ctx context.Context, id string, entity T) (T,
 		i,
 	)
 
-	helper.LogInfo("now %s", now)
-	helper.LogInfo("%s", args)
-	helper.LogInfo("%s", query)
-
 	row, err := global.DB.Query(ctx, query, args...)
 	if err != nil {
 		return *new(T), err
@@ -248,12 +248,18 @@ func (r *BaseRepository[T]) Update(ctx context.Context, id string, entity T) (T,
 }
 
 func (r *BaseRepository[T]) Delete(ctx context.Context, id string) (bool, error) {
-	// query := fmt.Sprintf(
-	// 	`INSERT INTO %s (%s) VALUES (%s) RETURNING *`,
-	// 	r.table,
-	// 	strings.Join(cols, ", "),
-	// 	strings.Join(placeholders, ", "),
-	// )
+	query := fmt.Sprintf(`
+		UPDATE %s 
+		SET deleted = true
+		WHERE id = $1
+		`,
+		r.table,
+	)
+
+	_, err := global.DB.Query(ctx, query, id)
+	if err != nil {
+		return false, err
+	}
 
 	return true, nil
 }

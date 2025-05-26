@@ -16,10 +16,10 @@ type GetByIdOptions struct {
 }
 
 type APIResponse struct {
-	Status  int
-	Message string
-	Data    any
-	Error   string
+	Status  int    `json:"status"`
+	Message string `json:"message"`
+	Data    any    `json:"data"`
+	Error   string `json:"error"`
 }
 
 func (a *APIResponse) ToAPIResponse() map[string]any {

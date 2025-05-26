@@ -1,9 +1,15 @@
 package repositories
 
-import "GolangBackend/internal/entities"
+import (
+	"GolangBackend/internal/dto"
+	"GolangBackend/internal/entities"
+	"context"
+)
 
 type IUserRepository interface {
 	IBaseRepository[*entities.UserEntity]
+
+	Register(ctx context.Context, body *dto.RegisterDTO) (*entities.UserEntity, error)
 }
 
 type UserRepository struct {
@@ -17,4 +23,8 @@ func NewUserRepository() *UserRepository {
 			func() *entities.UserEntity { return &entities.UserEntity{} },
 		),
 	}
+}
+
+func (r *UserRepository) Register(ctx context.Context, body *dto.RegisterDTO) (*entities.UserEntity, error) {
+	return nil, nil
 }

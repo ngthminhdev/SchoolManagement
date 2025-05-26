@@ -2,11 +2,11 @@ package entities
 
 type UserEntity struct {
 	BaseEntity
-	Name     string
-	Email    string
-	Phone    string
-	Password string
-	Gender   int8
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Phone    string `json:"phone"`
+	Password string `json:"password"`
+	Gender   int8   `json:"gender"`
 }
 
 func (u *UserEntity) FromMap(data map[string]any) {

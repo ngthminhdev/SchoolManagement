@@ -37,7 +37,7 @@ func (c *BaseController[T, S]) RegisterRoutes(router *mux.Router) {
 }
 
 func (c *BaseController[T, S]) JsonResponse(w http.ResponseWriter, data dto.APIResponse) {
-	response, err := json.Marshal(data.ToAPIResponse())
+	response, err := json.Marshal(data)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Json encoding to response error"))
@@ -165,13 +165,14 @@ func (c *BaseController[T, S]) Create(w http.ResponseWriter, r *http.Request) {
 	newEnity, err := c.service.Create(ctx, entity)
 
 	if err != nil {
+		helper.LogError(err, "Create entity error: service falure")
 		fail(http.StatusBadRequest, "Create entity error: service falure")
 		return
 	}
 
 	data := dto.APIResponse{
 		Status:  http.StatusOK,
-		Data:    newEnity.ToMap(),
+		Data:    newEnity,
 		Message: "OK",
 	}
 
@@ -204,7 +205,7 @@ func (c *BaseController[T, S]) Update(w http.ResponseWriter, r *http.Request) {
 
 	data := dto.APIResponse{
 		Status:  http.StatusOK,
-		Data:    newEnitty.ToMap(),
+		Data:    newEnitty,
 		Message: "OK",
 	}
 

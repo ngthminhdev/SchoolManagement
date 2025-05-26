@@ -21,7 +21,7 @@ var userTable MigrationQuery = MigrationQuery{
       name TEXT,
       email TEXT UNIQUE NOT NULL,
       phone TEXT UNIQUE NOT NULL, 
-      password TEXT UNIQUE NOT NULL, 
+      password TEXT NOT NULL, 
       gender SMALLINT DEFAULT 1,
       deleted BOOLEAN DEFAULT false,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now(),

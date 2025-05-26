@@ -12,10 +12,10 @@ type IBaseEntity interface {
 }
 
 type BaseEntity struct {
-	ID         string
-	CreatedAt  time.Time
-	ModifiedAt time.Time
-	Deleted    bool
+	ID         string    `json:"id"`
+	CreatedAt  time.Time `json:"created_at"`
+	ModifiedAt time.Time `json:"modified_at"`
+	Deleted    bool      `json:"deleted"`
 }
 
 func (e *BaseEntity) FromMap(data map[string]any) {
@@ -44,7 +44,6 @@ func (b *BaseEntity) ToMap() map[string]any {
 	}
 }
 
-// ToSQLParams returns the values in order for SQL query args
 func (b *BaseEntity) ToSQLParams() []any {
 	return []any{
 		b.ID,

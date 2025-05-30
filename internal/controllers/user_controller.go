@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"GolangBackend/helper"
 	"GolangBackend/internal/dto"
 	"GolangBackend/internal/entities"
 	"GolangBackend/internal/services"
@@ -32,7 +31,7 @@ func (c *UserController) RegisterRoutes(router *mux.Router) {
 }
 
 func (c *UserController) Register(w http.ResponseWriter, r *http.Request) {
-	// ctx := r.Context()
+	ctx := r.Context()
 	var body dto.RegisterDTO
 
 	fail := func(status int, message string) {
@@ -46,11 +45,16 @@ func (c *UserController) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	helper.LogInfo("%v", body)
+	newUser, err := c.service.Register(ctx, &body)
+
+	if err != nil {
+		fail(http.StatusBadRequest, err.Error())
+		return
+	}
 
 	data := dto.APIResponse{
 		Status:  http.StatusOK,
-		Data:    body,
+		Data:    newUser,
 		Message: "OK",
 	}
 

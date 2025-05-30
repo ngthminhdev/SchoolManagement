@@ -21,6 +21,9 @@ type IBaseRepository[T entities.IBaseEntity] interface {
 	Create(ctx context.Context, entity T) (T, error)
 	Update(ctx context.Context, id string, entity T) (T, error)
 	Delete(ctx context.Context, id string) (bool, error)
+
+	ExecuteOne(ctx context.Context, sql string, params ...any) (T, error)
+	ExecuteMany(ctx context.Context, sql string, params ...any) ([]T, error)
 }
 
 type BaseRepository[T entities.IBaseEntity] struct {
@@ -39,7 +42,7 @@ func (r *BaseRepository[T]) ScanRow(rows pgx.Rows) (T, error) {
 	defer rows.Close()
 
 	if !rows.Next() {
-		return *new(T), fmt.Errorf("no rows returned")
+		return *new(T), nil
 	}
 
 	fieldDescriptions := rows.FieldDescriptions()
@@ -128,9 +131,6 @@ func (r *BaseRepository[T]) Create(ctx context.Context, entity T) (T, error) {
 		strings.Join(cols, ", "),
 		strings.Join(placeholders, ", "),
 	)
-	
-	helper.LogInfo("%s", query)
-	helper.LogInfo("args %v", args)
 
 	row, err := global.DB.Query(ctx, query, args...)
 	helper.LogError(err, "err")
@@ -262,4 +262,24 @@ func (r *BaseRepository[T]) Delete(ctx context.Context, id string) (bool, error)
 	}
 
 	return true, nil
+}
+
+func (r *BaseRepository[T]) ExecuteOne(ctx context.Context, sql string, params ...any) (T, error) {
+	rows, err := global.DB.Query(ctx, sql, params...)
+	if err != nil {
+		helper.LogError(err, "Error executing raw SQL query for single result")
+		return *new(T), err
+	}
+
+	return r.ScanRow(rows)
+}
+
+func (r *BaseRepository[T]) ExecuteMany(ctx context.Context, sql string, params ...any) ([]T, error) {
+	rows, err := global.DB.Query(ctx, sql, params...)
+	if err != nil {
+		helper.LogError(err, "Error executing raw SQL query for multiple results")
+		return nil, err
+	}
+
+	return r.ScanRows(rows)
 }

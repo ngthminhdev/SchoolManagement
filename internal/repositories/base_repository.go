@@ -133,8 +133,8 @@ func (r *BaseRepository[T]) Create(ctx context.Context, entity T) (T, error) {
 	)
 
 	row, err := global.DB.Query(ctx, query, args...)
-	helper.LogError(err, "err")
 	if err != nil {
+		helper.LogError(err)
 		return *new(T), err
 	}
 

@@ -12,10 +12,10 @@ type IBaseEntity interface {
 }
 
 type BaseEntity struct {
-	ID         string    `json:"id"`
-	CreatedAt  time.Time `json:"created_at"`
-	ModifiedAt time.Time `json:"modified_at"`
-	Deleted    bool      `json:"deleted"`
+	ID         string    `json:"id" db:"id"`
+	CreatedAt  time.Time `json:"created_at" db:"created_at"`
+	ModifiedAt time.Time `json:"modified_at" db:"modified_at"`
+	Deleted    bool      `json:"-" db:"deleted"`
 }
 
 func (e *BaseEntity) FromMap(data map[string]any) {
@@ -41,14 +41,5 @@ func (b *BaseEntity) ToMap() map[string]any {
 		"created_at":  b.CreatedAt,
 		"modified_at": b.ModifiedAt,
 		"deleted":     b.Deleted,
-	}
-}
-
-func (b *BaseEntity) ToSQLParams() []any {
-	return []any{
-		b.ID,
-		b.CreatedAt,
-		b.ModifiedAt,
-		b.Deleted,
 	}
 }

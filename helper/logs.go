@@ -10,7 +10,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-
 func InitLogger(isWriteLogsToFile bool) {
 	global.Logger = log.New()
 
@@ -36,8 +35,15 @@ func InitLogger(isWriteLogsToFile bool) {
 	global.Logger.Infoln("Init Logger successfully")
 }
 
-func LogError(err error, msg string) {
-	global.Logger.Errorf("%s, %v", msg, errors.WithStack(err))
+func LogError(err error, msg ...string) {
+	errMsg := "Unknow error"
+	if err != nil {
+		errMsg = err.Error()
+	}
+	if len(msg) > 0 {
+		errMsg = msg[0]
+	}
+	global.Logger.Errorf("%s, %v", errMsg, errors.WithStack(err))
 }
 
 func LogWarn(msg string, args ...any) {

@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gorilla/mux"
 )
@@ -54,9 +55,12 @@ func (c *BaseController[T, S]) ErrorResponse(w http.ResponseWriter, status int, 
 		errorMsg = *message
 	}
 
+	errorCode := strings.ToLower(strings.ReplaceAll(errorMsg, " ", "_"))
+
 	data := dto.APIResponse{
-		Status: status,
-		Error:  errorMsg,
+		Status:  status,
+		Message: errorMsg,
+		Code:    errorCode,
 	}
 
 	c.JsonResponse(w, data)
@@ -209,10 +213,8 @@ func (c *BaseController[T, S]) Update(w http.ResponseWriter, r *http.Request) {
 		Message: "OK",
 	}
 
-
 	c.JsonResponse(w, data)
 }
-
 
 func (c *BaseController[T, S]) Delete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()

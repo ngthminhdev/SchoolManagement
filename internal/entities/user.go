@@ -2,11 +2,18 @@ package entities
 
 type UserEntity struct {
 	BaseEntity
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Phone    string `json:"phone"`
-	Password string `json:"password"`
-	Gender   int8   `json:"gender"`
+	Name     string `json:"name" db:"name"`
+	Email    string `json:"email" db:"email"`
+	Phone    string `json:"phone" db:"phone"`
+	Password string `json:"-" db:"password"`
+	Gender   int16   `json:"gender" db:"gender"`
+}
+
+type UserResponse struct {
+	UserEntity
+	Password     string `json:"-"`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 func (u *UserEntity) FromMap(data map[string]any) {
@@ -24,7 +31,7 @@ func (u *UserEntity) FromMap(data map[string]any) {
 	if v, ok := data["password"].(string); ok {
 		u.Password = v
 	}
-	if v, ok := data["gender"].(int8); ok {
+	if v, ok := data["gender"].(int16); ok {
 		u.Gender = v
 	}
 }
@@ -39,8 +46,4 @@ func (u *UserEntity) ToMap() map[string]any {
 	m["gender"] = u.Gender
 
 	return m
-}
-
-func (u *UserEntity) ToSQLParams() []any {
-	return append(u.BaseEntity.ToSQLParams(), u.Name, u.Email, u.Phone, u.Password, u.Gender)
 }

@@ -28,27 +28,66 @@ func NewUserController(service services.IUserService) *UserController {
 func (c *UserController) RegisterRoutes(router *mux.Router) {
 	c.BaseController.RegisterRoutes(router)
 	router.HandleFunc("/"+c.path+"/register", c.Register).Methods("POST")
+	router.HandleFunc("/"+c.path+"/login", c.Login).Methods("POST")
 }
 
 func (c *UserController) Register(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	var body dto.RegisterDTO
 
-	fail := func(status int, message string) {
-		c.ErrorResponse(w, status, &message)
-	}
-
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&body)
 	if err != nil {
-		fail(http.StatusBadRequest, "Invalid JSON")
+		errMsg := err.Error()
+		c.ErrorResponse(w, http.StatusBadRequest, &errMsg)
 		return
 	}
 
 	newUser, err := c.service.Register(ctx, &body)
+	if err != nil {
+		errMsg := err.Error()
+		c.ErrorResponse(w, http.StatusBadRequest, &errMsg)
+		return
+	}
+
+	data := dto.APIResponse{
+		Status:  http.StatusOK,
+		Data:    newUser,
+		Message: "OK",
+	}
+
+	c.JsonResponse(w, data)
+}
+
+func (c *UserController) Login(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	var body dto.LoginDTO
+
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&body)
+	if err != nil {
+		errMsg := err.Error()
+		c.ErrorResponse(w, http.StatusBadRequest, &errMsg)
+		return
+	}
+
+	if body.Account == "" {
+		errMsg := "account is required"
+		c.ErrorResponse(w, http.StatusBadRequest, &errMsg)
+		return
+	}
+
+	if body.Password == "" {
+		errMsg := "password is required"
+		c.ErrorResponse(w, http.StatusBadRequest, &errMsg)
+		return
+	}
+
+	newUser, err := c.service.Login(ctx, &body)
 
 	if err != nil {
-		fail(http.StatusBadRequest, err.Error())
+		errMsg := err.Error()
+		c.ErrorResponse(w, http.StatusBadRequest, &errMsg)
 		return
 	}
 

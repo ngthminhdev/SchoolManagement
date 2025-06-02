@@ -2,6 +2,7 @@ package services
 
 import (
 	"GolangBackend/config"
+	"GolangBackend/helper"
 	"fmt"
 	"time"
 
@@ -37,10 +38,11 @@ func VerifyJWT(jwtToken string) (bool, error) {
 	JWT_SECRET := config.GetEnv("JWT_SECRET", "JWT_SECRET")
 
 	token, err := jwt.Parse(jwtToken, func(t *jwt.Token) (any, error) {
-		return JWT_SECRET, nil
+		return []byte(JWT_SECRET), nil
 	})
 
 	if err != nil || !token.Valid {
+		helper.LogError(err)
 		return false, fmt.Errorf("JWT invalid")
 	}
 

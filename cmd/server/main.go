@@ -18,8 +18,9 @@ import (
 func main() {
 	config.LoadEnv()
 	env := config.GetEnv("ENV", "development")
-	helper.InitLogger(env == "production")
+	config.SetWhiteListPaths()
 
+	helper.InitLogger(env == "production")
 	helper.LogInfo("Running with ENV [%s]\n", env)
 
 	db.ConnectDatabase()
@@ -27,13 +28,15 @@ func main() {
 	router := mux.NewRouter()
 	apiRouter := router.PathPrefix("/api").Subrouter()
 
-  // User
-  userRepo := repositories.NewUserRepository()
-  userService := services.NewUserService(userRepo)
-  userController := controllers.NewUserController(userService)
-  userController.RegisterRoutes(apiRouter)
+	// User
+	userRepo := repositories.NewUserRepository()
+	userService := services.NewUserService(userRepo)
+	userController := controllers.NewUserController(userService)
+	userController.RegisterRoutes(apiRouter)
 
-  router.Use(middleware.HttpLog)
+	// Middleware
+	router.Use(middleware.HttpLog)
+	router.Use(middleware.JWTAuth)
 
 	var port string = config.GetPort()
 	var server http.Server = http.Server{

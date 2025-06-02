@@ -21,3 +21,8 @@ type APIResponse struct {
 	Code    string `json:"code"`
 	Data    any    `json:"data"`
 }
+
+type WhileListPath struct {
+	Method string
+	Path   string
+}

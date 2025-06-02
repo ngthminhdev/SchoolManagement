@@ -6,6 +6,7 @@ import (
 )
 
 var (
-  Logger *log.Logger
-  DB *pgxpool.Pool
+	Logger         *log.Logger
+	DB             *pgxpool.Pool
+	WhileListPaths map[string]string
 )
